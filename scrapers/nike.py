@@ -1,24 +1,23 @@
-#!/usr/bin/env python
-# author: Mykal Burris
-# created: 17-09-2016
-# updated: 20-09-2016
-# version: 3.2
+"""
+author: Mykal Burris
+created: 17-Sept-2016
+updated: 20-Sept-2016
+version: 3.5
+"""
 
 from collections import OrderedDict
-import urllib.request
 from scraperlibs import*
+import urllib.request
 import timeit
 import json
 import time
 import os
 
-# TODO: better way of archiving urls, universal json structure
-
 base_url = 'http://store.nike.com/us/en_us'
 product_urls = set()
 
-today = time.strftime("%d%b%Y")
-archive_file = open(os.getcwd() + '/nike/nike_urls.txt', 'a+')
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+archive_file = open(parent_dir + '/nike/nike_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 
@@ -104,6 +103,9 @@ def product_data():
 		featured_tech = json_data['featuredTechnology']
 		geo = json_data['chat']['geo']
 		
+		if tech_specs is not None or featured_tech is not None:
+			print('Has tech specs: ', url)
+		
 		if width is None:
 			width = 'null'
 		elif width is 'Regular':
@@ -165,6 +167,31 @@ def product_data():
 		if 'Nike' in model:
 			model = model.replace('Nike', '')
 			
+		# create product folder
+		folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+		os.makedirs(folder_path, exist_ok=True)
+		
+		# download images
+		image_array = []
+		previous_time = ''
+		for image_url in soup.find_all('img', {'class': 'primary-image'}):
+			image_url = image_url['data-zoom-image']
+			if 'png' in image_url:
+				ext = '.png'
+			else:
+				ext = '.jpeg'
+			
+			timer = str(time.time())
+			file_time = timer[:timer.find('.')]
+			if file_time == previous_time:
+				file_time = int(file_time) + 1
+			previous_time = file_time
+			
+			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, file_time, ext))
+			urllib.request.urlretrieve(image_url, image_path)
+		image_array = ([dict(file_path=url) for url in image_array])
+		url_archive.add(url)
+		
 		product_json = {
 			'brand': brand,
 			'model': model.strip(),
@@ -181,29 +208,15 @@ def product_data():
 			'width': width,
 			'price': price,
 			'size run': size_run,
+			'images': image_array,
 			'source': 'http://www.nike.com'
 		}
-	
-		# create product folder
-		folder_path = os.getcwd() + '/nike/{}/{}/{}/{}'.format(brand, model, gender, product_id)
-		os.makedirs(folder_path, exist_ok=True)
 
 		# write json file
 		json_path = product_id + '.json'
 		file_name = open(os.path.join(folder_path, json_path), 'w')
 		print(json.dumps(product_json, indent=3), file=file_name)
 	
-		# download images
-		for counter, image_url in enumerate(json_data['imagesHeroZoom']):
-			if 'png' in image_url:
-				ext = '.png'
-			else:
-				ext = '.jpeg'
-			image_path = os.path.join(folder_path, '{}|{}{}'.format(product_id, str(counter), ext))
-			urllib.request.urlretrieve(image_url, image_path)
-
-		url_archive.add(url)
-
 		# revert dict values to false
 		collection = dict.fromkeys(collection.fromkeys(collection), False)
 		release_type = dict.fromkeys(release_type.fromkeys(release_type), False)
@@ -219,4 +232,4 @@ retrieve_links()
 print(url_archive, file=archive_file)
 archive_file.close()
 
-print(timeit.default_timer()-start)
+print('{} mins'.format(timeit.default_timer()-start/60))

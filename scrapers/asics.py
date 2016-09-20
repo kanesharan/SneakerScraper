@@ -1,24 +1,21 @@
-#!/usr/bin/env python
-
 """
 author: Mykal Burris
 created: 18-Sept-2016
 updated: 20-Sept-2016
-version: 1.3
+version: 1.4
 """
 
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict
-from scraperlibs*
 import urllib.request
-import os
+from scraperlibs import*
 import timeit
 import json
 import time
+import os
 
-#TODO: Missing release date, universal json structure, change image file path
-
-archive_file = open(os.getcwd() + '/asics/asics_urls.txt', 'a+')
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+archive_file = open(parent_dir + '/asics/asics_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 base_url = 'http://www.asicstiger.com/us/en-us'
@@ -61,7 +58,8 @@ def product_data():
 		json_data = json.loads(data)
 		json_data = json_data['product']
 		
-		model = json_data['name']
+		brand = 'ASICS'
+		model = json_data['name'].strip()
 		width = json_data['width'].title()
 		gender = json_data['gender'].title()
 		color_desc = json_data['variant']
@@ -70,13 +68,15 @@ def product_data():
 		product_id = '{}-{}'.format(style_code, color_code)
 		price = json_data['price']
 		
+		release_date = time.strftime("%Y")
+		
 		if width is 'Undefined':
 			width = 'null'
 		else:
 			width = width
 		
 		if 'GS' in model:
-			model = model.replace('GS', '')
+			model = model.replace('GS', '').strip()
 		
 		for size in json_data['stock-size']:
 			size_run[size] = True
@@ -90,43 +90,58 @@ def product_data():
 		else:
 			gender = gender
 		
+		# create product folder
+		folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+		os.makedirs(folder_path, exist_ok=True)
+		
+		# download images
+		image_array = []
+		previous_time = ''
+		for image in soup.find_all('img', {'class': 'rsImg'}):
+			image_url = image['src']
+			if 'png' in image_url:
+				ext = '.png'
+			else:
+				ext = '.jpeg'
+			
+			timer = str(time.time())
+			file_time = timer[:timer.find('.')]
+			if file_time == previous_time:
+				file_time = int(file_time) + 1
+			previous_time = file_time
+			
+			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, file_time, ext))
+			image_array.append(image_path)
+			urllib.request.urlretrieve(image_url, image_path)
+		image_array = ([dict(file_path=url) for url in image_array])
+		url_archive.add(url)
+	
 		product_json = {
-			'brand': 'ASICS',
-			'model': model.strip(),
+			'brand': brand,
+			'model': model,
 			'gender': gender,
 			'color description': color_desc,
 			'color code': color_code,
 			'style code': style_code,
 			'product id': product_id,
 			'release type': 'GR',
-			'release date': 'null',
+			'release date': release_date,
 			'geo': 'US',
 			'width': width,
 			'price': price,
 			'size run': size_run,
+			'images': image_array,
 			'source': 'http://www.asicstiger.com'
 		}
-		
-		# create product folder
-		folder_path = os.getcwd() + '/asics/{}/{}/{}'.format(model, gender, product_id)
-		os.makedirs(folder_path, exist_ok=True)
 		
 		# write json file
 		json_path = product_id + '.json'
 		file_name = open(os.path.join(folder_path, json_path), 'w')
 		print(json.dumps(product_json, indent=3), file=file_name)
 		
-		# download images
-		for counter, image in enumerate(soup.find_all('img', {'class': 'rsImg'})):
-			image_url = image['src']
-			if 'png' in image_url:
-				ext = '.png'
-			else:
-				ext = '.jpeg'
-			image_path = os.path.join(folder_path, '{}|{}{}'.format(product_id, str(counter), ext))
-			urllib.request.urlretrieve(image_url, image_path)
-	
+		# revert dict values to false
 		size_run = OrderedDict.fromkeys(size_run.fromkeys(size_run), False)
+		
 		url_archive.add(url)
 		time.sleep(5)
 		
@@ -137,4 +152,5 @@ retrieve_links()
 
 print(url_archive, file=archive_file)
 archive_file.close()
+
 print('{} mins'.format(timeit.default_timer()-start/60))
