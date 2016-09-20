@@ -2,7 +2,7 @@
 author: Mykal Burris
 created: 19-Sept-2016
 updated: 20-Sept-2016
-version: 1.4
+version: 1.6
 """
 
 from collections import OrderedDict
@@ -13,14 +13,11 @@ import json
 import time
 import os
 
-# TODO: better way of managing data that's already been scraped
-
 base_url = 'http://us.puma.com/en_US'
 product_urls = set()
 
-today = time.strftime("%d%b%Y")
-
-archive_file = open(os.getcwd() + '/puma_urls.txt', 'a+')
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+archive_file = open(parent_dir + '/puma/puma_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 
@@ -82,7 +79,12 @@ def product_data():
 		style_code = product_id[:product_id.find('-')]
 		color_code = product_id[product_id.find('-') + 1:]
 		color_desc = soup.find('label', {'itemprop': 'color'}).text.replace('\n', '')
-		price = soup.find('span', {'class': 'price-standard'}).string.replace('$', '')
+		price = soup.find('span', {'class': 'price-standard'})
+		if price is None:
+			price = soup.find('span', {'product-sales-price'}).string.replace('$', '')
+		else:
+			price = price.string.replace('$', '')
+			
 		if '.00' in price:
 			price = price[:price.find('.')]
 		width = 'null'
@@ -94,13 +96,16 @@ def product_data():
 			for size in soup.find('ul', {'class': 'size'}).find_all('a'):
 				size = size['title']
 				size_run[size] = True
+				
+		# create product folder
+		folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+		os.makedirs(folder_path, exist_ok=True)
 		
 		# download images
 		image_array = []
 		previous_time = ''
-		for image_url in soup.find_all('img', {'class': 'primary-image'}):
-			image_url = image_url['data-zoom-image']
-			
+		for image in soup.find_all('img', {'class': 'primary-image'}):
+			image_url = image['data-zoom-image']
 			if 'png' in image_url:
 				ext = '.png'
 			else:
@@ -111,11 +116,6 @@ def product_data():
 			if file_time == previous_time:
 				file_time = int(file_time) + 1
 			previous_time = file_time
-			
-			# create product folder
-			parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-			folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
-			os.makedirs(folder_path, exist_ok=True)
 			
 			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, file_time, ext))
 			image_array.append(image_path)
@@ -151,7 +151,8 @@ def product_data():
 		# revert dict values to false
 		release_type = dict.fromkeys(release_type.fromkeys(release_type), False)
 		size_run = OrderedDict.fromkeys(size_run.fromkeys(size_run), False)
-
+		
+		url_archive.add(url)
 		time.sleep(5)
 
 
@@ -163,4 +164,4 @@ retrieve_links()
 print(url_archive, file=archive_file)
 archive_file.close()
 
-print(timeit.default_timer() - start)
+print('{} mins'.format(timeit.default_timer()-start/60))
