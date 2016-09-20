@@ -1,6 +1,6 @@
 # SneakerScraper
 
-Data scraper for sneaker sites.
+Scraper for sneaker sites to build the ultimate database of sneakers.
 
 
 ### Installation
@@ -16,3 +16,10 @@ $ pip install urllib.request
 
 ### Features
 Scrapes product data including product id, price, size run, and release date; also downloads product images. 
+
+
+### Site Supported
+- [x] Nike
+- [ ] Asics
+- [ ] Puma
+- [ ] Adidas
