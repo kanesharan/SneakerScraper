@@ -1,6 +1,6 @@
 # SneakerScraper
 
-Scraper for sneaker sites to build the ultimate database of sneakers.
+Scraper for sneaker sites to build the ultimate database of sneakers for use in future projects.
 
 
 ### Installation
