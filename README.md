@@ -7,11 +7,13 @@ Data scraper for sneaker sites.
 
 Requires [Python 3](https://www.python.org/downloads/)
 
-BeautifulSoup4 and urllib.request:
+BeautifulSoup4, urllib.request, selenium-requests, and phantomjs:
 
 ```sh
 $ pip install bs4
 $ pip install urllib.request
+$ pip install selenium-requests
+$ npm -g install phantomjs
 ```
 
 ### Features
