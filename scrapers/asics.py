@@ -1,8 +1,11 @@
 #!/usr/bin/env python
-# author: Mykal Burris
-# created: 18-09-2016
-# updated: 20-09-2016
-# version: 1.2
+
+"""
+author: Mykal Burris
+created: 18-Sept-2016
+updated: 20-Sept-2016
+version: 1.3
+"""
 
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict
@@ -13,7 +16,7 @@ import timeit
 import json
 import time
 
-#  TODO: Missing release date, universal json structure, unit test
+#TODO: Missing release date, universal json structure, change image file path
 
 archive_file = open(os.getcwd() + '/asics/asics_urls.txt', 'a+')
 url_archive = set(archive_file)
@@ -66,7 +69,9 @@ def product_data():
 		style_code = json_data['style-code']
 		product_id = '{}-{}'.format(style_code, color_code)
 		price = json_data['price']
-		r
+		
+		if width is 'Undefined':
+			width = 'null'
 		else:
 			width = width
 		
@@ -132,4 +137,4 @@ retrieve_links()
 
 print(url_archive, file=archive_file)
 archive_file.close()
-print('{} secs'.format(timeit.default_timer()-start/60))
+print('{} mins'.format(timeit.default_timer()-start/60))
