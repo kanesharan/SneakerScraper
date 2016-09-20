@@ -18,14 +18,14 @@ base_url = 'http://store.nike.com/us/en_us'
 product_urls = set()
 
 today = time.strftime("%d%b%Y")
-archive_file = open('/Users/mykal/Mega/Sneaker Database/Nike/nike_urls.txt', 'a+')
+archive_file = open(os.getcwd() + '/nike/nike_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 
 def retrieve_links():
 	black_list = ['Sandals', 'Slide', 'Flip', 'iD', 'Spike', 'Training']
 	black_list += ['Soccer', 'Cleat', 'Football, Golf', 'Track']
-	
+
 	categories = {
 		'Lab': base_url + '/pw/nikelab-shoes/ofoZoi3',
 		'Womens Lifestyle': base_url + '/pw/womens-lifestyle-shoes/7ptZoneZpipZonoZonpZoi3',
@@ -37,7 +37,7 @@ def retrieve_links():
 		'Boys': base_url + '/pw/youth-boys-shoes/7pvZ88nZpipZonoZonnZoi3',
 		'Girls': base_url + '/pw/youth-girls-shoes/7pwZ88nZpipZonnZonoZoi3?ipp=101'
 	}
-	
+
 	for val in categories:
 		url = categories[val]
 		soup = soup_maker(request(url))
@@ -47,11 +47,10 @@ def retrieve_links():
 				sub_name = a.parent.parent.parent.parent.parent.find('p', {'class': 'product-subtitle'}).string
 			except:
 				continue
-				
+
 			if not any(black_word in name for black_word in black_list) and not any(black_word in sub_name for black_word in black_list):
 				if a['href'] not in product_urls and a['href'] not in url_archive:
 					product_urls.add(a['href'])
-	print(len(product_urls), '\n')
 	product_data()
 	
 	
@@ -186,7 +185,7 @@ def product_data():
 		}
 	
 		# create product folder
-		folder_path = '/Users/mykal/MEGA/Sneaker Database/Nike/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+		folder_path = os.getcwd() + '/nike/{}/{}/{}/{}'.format(brand, model, gender, product_id)
 		os.makedirs(folder_path, exist_ok=True)
 
 		# write json file
@@ -216,7 +215,7 @@ def product_data():
 start = timeit.default_timer()
 
 retrieve_links()
-
+ 
 print(url_archive, file=archive_file)
 archive_file.close()
 

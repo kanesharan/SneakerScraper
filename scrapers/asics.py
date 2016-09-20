@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict
-from scraperlibs import request
+from scraperlibs*
 import urllib.request
 import os
 import timeit
@@ -9,7 +9,7 @@ import time
 
 #  TODO: Missing release date, universal json structure, unit test
 
-archive_file = open('/Users/mykal/Mega/Sneaker Database/ASICS/asics_urls.txt', 'a+')
+archive_file = open(os.getcwd() + '/asics/asics_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 base_url = 'http://www.asicstiger.com/us/en-us'
@@ -97,7 +97,7 @@ def product_data():
 		}
 		
 		# create product folder
-		folder_path = '/Users/mykal/MEGA/Sneaker Database/ASICS/{}/{}/{}'.format(model, gender, product_id)
+		folder_path = os.getcwd() + '/asics/{}/{}/{}'.format(model, gender, product_id)
 		os.makedirs(folder_path, exist_ok=True)
 		
 		# write json file
