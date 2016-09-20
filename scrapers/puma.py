@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 author: Mykal Burris
 created: 19-Sept-2016
@@ -13,9 +11,9 @@ import urllib.request
 import timeit
 import json
 import time
-import os, sys
+import os
 
-# TODO: array of image file paths, better way of archiving urls
+# TODO: better way of managing data that's already been scraped
 
 base_url = 'http://us.puma.com/en_US'
 product_urls = set()
@@ -49,7 +47,6 @@ def retrieve_links():
 				url = loader['data-grid-url']
 			else:
 				url = None
-	print(len(product_urls))
 	product_data()
 	
 
@@ -68,70 +65,42 @@ def product_data():
 			continue
 		
 		# retrieve data
-		release_date = '2016'
-		try:
-			model = soup.find('h1', {'class': 'product-name'}).string
-		except:
-			print('NAME ERROR: ', url)
-			continue
-			
+		release_date = time.strftime("%Y")
+	
+		model = soup.find('h1', {'class': 'product-name'}).string.replace('\n', '')
 		brand = 'Puma'
 		category = 'null'
 		
 		if 'Women' in model:
 			gender = 'Women'
-			model = model[:model.find('Women\'s')]
+			model = model[:model.find('Women\'s')].strip()
 		else:
 			gender = 'Men'
-			model = model[:model.find('Men\'s')]
+			model = model[:model.find('Men\'s')].strip()
 		
 		product_id = soup.find('span', {'itemprop': 'productID'}).string
 		style_code = product_id[:product_id.find('-')]
 		color_code = product_id[product_id.find('-') + 1:]
 		color_desc = soup.find('label', {'itemprop': 'color'}).text.replace('\n', '')
-		price = soup.find('span', {'itemprop': 'price'})['data-price']
-		price = price[:price.find('.')]
+		price = soup.find('span', {'class': 'price-standard'}).string.replace('$', '')
+		if '.00' in price:
+			price = price[:price.find('.')]
 		width = 'null'
 		
 		release_type['GR'] = True
 		
 		# doesnt account for sizes oos
-		for size in soup.find('ul', {'class': 'size'}).find_all('a'):
-			size = size['title']
-			size_run[size] = True
-		
-		product_json = {
-			'brand': brand,
-			'model': model.strip(),
-			'category': category,
-			'gender': gender,
-			'color description': color_desc,
-			'color code': color_code,
-			'style code': style_code,
-			'product id': product_id,
-			'collection': 'null',
-			'release type': release_type,
-			'release date': release_date,
-			'geo': 'US',
-			'width': width,
-			'price': price,
-			'size run': size_run,
-			'source': 'http://www.puma.com'
-		}
-		
-		# create product folder
-		folder_path = os.getcwd() + '/puma/{}/{}/{}/{}'.format(brand, model, gender, product_id)
-		os.makedirs(folder_path, exist_ok=True)
-		
-		# write json file
-		json_path = product_id + '.json'
-		file_name = open(os.path.join(folder_path, json_path), 'w')
-		print(json.dumps(product_json, indent=3), file=file_name)
+		if soup.find('p', {'class': 'not-available-msg'}) is None:
+			for size in soup.find('ul', {'class': 'size'}).find_all('a'):
+				size = size['title']
+				size_run[size] = True
 		
 		# download images
+		image_array = []
 		previous_time = ''
 		for image_url in soup.find_all('img', {'class': 'primary-image'}):
 			image_url = image_url['data-zoom-image']
+			
 			if 'png' in image_url:
 				ext = '.png'
 			else:
@@ -143,15 +112,46 @@ def product_data():
 				file_time = int(file_time) + 1
 			previous_time = file_time
 			
+			# create product folder
+			parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+			folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+			os.makedirs(folder_path, exist_ok=True)
+			
 			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, file_time, ext))
+			image_array.append(image_path)
 			urllib.request.urlretrieve(image_url, image_path)
-		
+		image_array = ([dict(file_path=url) for url in image_array])
 		url_archive.add(url)
+	
+		product_json = {
+			'brand': brand,
+			'model': model,
+			'category': category,
+			'gender': gender,
+			'color description': color_desc,
+			'color code': color_code,
+			'style code': style_code,
+			'product id': product_id,
+			'collection': 'null',
+			'release type': release_type,
+			'release date': release_date,
+			'geo': 'US',
+			'width': width,
+			'price': price.strip(),
+			'size run': size_run,
+			'images': image_array,
+			'source': 'http://www.puma.com'
+		}
 		
+		# write json file
+		json_path = product_id + '.json'
+		file_name = open(os.path.join(folder_path, json_path), 'w')
+		print(json.dumps(product_json, indent=3), file=file_name)
+
 		# revert dict values to false
 		release_type = dict.fromkeys(release_type.fromkeys(release_type), False)
 		size_run = OrderedDict.fromkeys(size_run.fromkeys(size_run), False)
-		
+
 		time.sleep(5)
 
 
