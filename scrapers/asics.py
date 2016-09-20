@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# author: Mykal Burris
+# created: 18-09-2016
+# updated: 20-09-2016
+# version: 1.2
+
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict
 from scraperlibs*

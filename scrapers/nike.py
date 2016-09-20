@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # author: Mykal Burris
 # created: 17-09-2016
-# updated: 18-09-2016
-# version: 3.1
+# updated: 20-09-2016
+# version: 3.2
 
 from collections import OrderedDict
 import urllib.request
