@@ -1,6 +1,6 @@
 # SneakerScraper
 
-Series of scrapers for sneaker sites in effort to build the ultimate database of sneakers for use in future projects.
+Series of scrapers for collecting sneaker information in effort to build the ultimate database for use in future projects.
 
 
 ### Installation
