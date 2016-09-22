@@ -15,10 +15,15 @@ $ pip install urllib.request
 ```
 
 ### Features
-Scrapes product data including product id, price, size run, and release date; also downloads product images. 
+Scrapes product data:
+*product id
+*price
+*size run
+*release date
+*product images. 
 
 
-### Supported Site
+### Supported Sites:
 - [] Nike
 - [x] Asics
 - [ ] Puma
