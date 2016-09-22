@@ -25,9 +25,9 @@ Scrapes product data including:
 
 
 ### Supported Sites:
-- [ ] Nike
+- [x] Nike
 - [x] Asics
-- [ ] Puma
+- [x] Puma
 - [ ] Adidas
 - [ ] New Balance
 - [ ] Saucony
