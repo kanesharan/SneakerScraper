@@ -1,24 +1,23 @@
-#!/usr/bin/env python
-# author: Mykal Burris
-# created: 17-09-2016
-# updated: 20-09-2016
-# version: 3.2
+"""
+author: Mykal Burris
+created: 17-Sept-2016
+updated: 21-Sept-2016
+version: 3.7
+"""
 
+from scraper_lib import*
 from collections import OrderedDict
 import urllib.request
-from scraperlibs import*
 import timeit
 import json
 import time
 import os
 
-# TODO: better way of archiving urls, universal json structure
-
 base_url = 'http://store.nike.com/us/en_us'
 product_urls = set()
 
-today = time.strftime("%d%b%Y")
-archive_file = open(os.getcwd() + '/nike/nike_urls.txt', 'a+')
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+archive_file = open(parent_dir + '/data/nike/nike_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 
@@ -51,7 +50,6 @@ def retrieve_links():
 			if not any(black_word in name for black_word in black_list) and not any(black_word in sub_name for black_word in black_list):
 				if a['href'] not in product_urls and a['href'] not in url_archive:
 					product_urls.add(a['href'])
-	product_data()
 	
 	
 def product_data():
@@ -70,15 +68,14 @@ def product_data():
 	}
 	
 	for url in product_urls:
-		print(url)
-		try:
-			soup = soup_maker(request(url))
-		except:
-			print('ERROR: ', url)
+		req = request(url)
+		if req is not None:
+			soup = soup_maker(req)
+		else:
+			print(url)
 			continue
-		
+			
 		data = soup.find('script', id="product-data")
-		
 		if data is None:
 			continue
 			
@@ -103,6 +100,9 @@ def product_data():
 		tech_specs = json_data['techSpecs']
 		featured_tech = json_data['featuredTechnology']
 		geo = json_data['chat']['geo']
+		
+		if tech_specs is not None or featured_tech is not None:
+			print('Has tech specs: ', url)
 		
 		if width is None:
 			width = 'null'
@@ -164,11 +164,40 @@ def product_data():
 			
 		if 'Nike' in model:
 			model = model.replace('Nike', '')
+		
+		model = model.strip()
 			
+		# create product folder
+		folder_path = parent_dir + '/data' + '/{}/{}/{}/{}'.format(brand, model, gender, product_id)
+		os.makedirs(folder_path, exist_ok=True)
+		
+		# download images
+		image_array = []
+		image_carousel = soup.find_all('img', {'class': 'primary-image'})
+		image_type = 'data-zoom-image'
+		
+		if image_carousel == []:
+			image_carousel = soup.find_all('img', {'class': 'exp-pdp-alt-image'})
+			image_type = 'data-large-image'
+
+		for image_url in image_carousel:
+			image_url = image_url[image_type]
+			if 'png' in image_url:
+				
+				ext = '.png'
+			else:
+				ext = '.jpeg'
+
+			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, int(time.time()), ext))
+			image_array.append(image_path)
+			urllib.request.urlretrieve(image_url, image_path)
+		image_array = ([dict(file_path=url) for url in image_array])
+		url_archive.add(url)
+		
 		product_json = {
 			'brand': brand,
 			'model': model.strip(),
-			'category': category,  # better name
+			'category': category,
 			'gender': gender,
 			'color description': color_desc,
 			'color code': color_code,
@@ -181,42 +210,30 @@ def product_data():
 			'width': width,
 			'price': price,
 			'size run': size_run,
+			'images': image_array,
 			'source': 'http://www.nike.com'
 		}
-	
-		# create product folder
-		folder_path = os.getcwd() + '/nike/{}/{}/{}/{}'.format(brand, model, gender, product_id)
-		os.makedirs(folder_path, exist_ok=True)
 
 		# write json file
 		json_path = product_id + '.json'
 		file_name = open(os.path.join(folder_path, json_path), 'w')
 		print(json.dumps(product_json, indent=3), file=file_name)
-	
-		# download images
-		for counter, image_url in enumerate(json_data['imagesHeroZoom']):
-			if 'png' in image_url:
-				ext = '.png'
-			else:
-				ext = '.jpeg'
-			image_path = os.path.join(folder_path, '{}|{}{}'.format(product_id, str(counter), ext))
-			urllib.request.urlretrieve(image_url, image_path)
-
-		url_archive.add(url)
 
 		# revert dict values to false
 		collection = dict.fromkeys(collection.fromkeys(collection), False)
 		release_type = dict.fromkeys(release_type.fromkeys(release_type), False)
 		size_run = OrderedDict.fromkeys(size_run.fromkeys(size_run), False)
-		
+
 		time.sleep(5)
+
 			
-# Main
-start = timeit.default_timer()
-
-retrieve_links()
- 
-print(url_archive, file=archive_file)
-archive_file.close()
-
-print(timeit.default_timer()-start)
+def main():
+	start = timeit.default_timer()
+	
+	retrieve_links()
+	product_data()
+	
+	print(url_archive, file=archive_file)
+	archive_file.close()
+	
+	print('{} mins'.format((timeit.default_timer()-start)/60))
