@@ -1,21 +1,19 @@
 """
 author: Mykal Burris
 created: 18-Sept-2016
-updated: 20-Sept-2016
-version: 1.4
+updated: 21-Sept-2016
+version: 1.6
 """
-
-from bs4 import BeautifulSoup as bs
+from scraper_lib import*
 from collections import OrderedDict
 import urllib.request
-from scraperlibs import*
 import timeit
-import json
 import time
+import json
 import os
 
 parent_dir = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
-archive_file = open(parent_dir + '/asics/asics_urls.txt', 'a+')
+archive_file = open(parent_dir + '/data/asics/asics_urls.txt', 'a+')
 url_archive = set(archive_file)
 
 base_url = 'http://www.asicstiger.com/us/en-us'
@@ -32,7 +30,7 @@ def retrieve_links():
 
 	for val in categories:
 		url = categories[val]
-		soup = bs(request(url), 'lxml')
+		soup = soup_maker(request(url))
 		for a in soup.find('div', {'class': 'col-sm-9 product-list'}).find_all('a', href=True):
 			url = base_url + a['href']
 			if url not in product_urls and url not in url_archive:
@@ -45,9 +43,17 @@ def product_data():
 	size_run.update(OrderedDict.fromkeys(['8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5'], False))
 	size_run.update(OrderedDict.fromkeys(['12', '12.5', '13', '13.5', '14', '15', '16', '17', '18'], False))
 	
+	count = len(product_urls)
 	for url in product_urls:
-		soup = bs(request(url), 'lxml')
-		data = soup.find_all('script', type='text/javascript')[2]
+		count -= 1
+		print(count)
+		
+		req = request(url)
+		if req is not None:
+			soup = soup_maker(req)
+		else:
+			continue
+		data = soup.find_all('script', type='text/javascript')[1]
 		for script in data:
 			data = script.extract()
 		
@@ -96,7 +102,6 @@ def product_data():
 		
 		# download images
 		image_array = []
-		previous_time = ''
 		for image in soup.find_all('img', {'class': 'rsImg'}):
 			image_url = image['src']
 			if 'png' in image_url:
@@ -104,13 +109,7 @@ def product_data():
 			else:
 				ext = '.jpeg'
 			
-			timer = str(time.time())
-			file_time = timer[:timer.find('.')]
-			if file_time == previous_time:
-				file_time = int(file_time) + 1
-			previous_time = file_time
-			
-			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, file_time, ext))
+			image_path = os.path.join(folder_path, '{}_{}{}'.format(product_id, int(time.time()), ext))
 			image_array.append(image_path)
 			urllib.request.urlretrieve(image_url, image_path)
 		image_array = ([dict(file_path=url) for url in image_array])
@@ -153,4 +152,4 @@ retrieve_links()
 print(url_archive, file=archive_file)
 archive_file.close()
 
-print('{} mins'.format(timeit.default_timer()-start/60))
+print('{} mins'.format((timeit.default_timer()-start)/60))
