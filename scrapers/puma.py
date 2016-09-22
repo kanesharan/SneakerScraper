@@ -44,7 +44,6 @@ def retrieve_links():
 				url = loader['data-grid-url']
 			else:
 				url = None
-	product_data()
 	
 
 def product_data():
@@ -55,10 +54,11 @@ def product_data():
 	size_run.update(OrderedDict.fromkeys(['12', '12.5', '13', '13.5', '14', '15', '16', '17', '18'], False))
 	
 	for url in product_urls:
-		try:
-			soup = soup_maker(request(url))
-		except:
-			print('CONNECTION ERROR: ', url)
+		req = request(url)
+		if req is not None:
+			soup = soup_maker(req)
+		else:
+			print(url)
 			continue
 		
 		# retrieve data
@@ -157,11 +157,13 @@ def product_data():
 
 
 # Main
-start = timeit.default_timer()
-
-retrieve_links()
-
-print(url_archive, file=archive_file)
-archive_file.close()
-
-print('{} mins'.format(timeit.default_timer()-start/60))
+def main():
+	start = timeit.default_timer()
+	
+	retrieve_links()
+	product_data()
+	
+	print(url_archive, file=archive_file)
+	archive_file.close()
+	
+	print('{} mins'.format((timeit.default_timer() - start) / 60))

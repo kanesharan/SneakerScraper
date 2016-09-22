@@ -50,7 +50,6 @@ def retrieve_links():
 			if not any(black_word in name for black_word in black_list) and not any(black_word in sub_name for black_word in black_list):
 				if a['href'] not in product_urls and a['href'] not in url_archive:
 					product_urls.add(a['href'])
-	product_data()
 	
 	
 def product_data():
@@ -67,14 +66,16 @@ def product_data():
 		'3': 'GS',
 		'4': 'GS'
 	}
-	count = len(product_urls)
+	
 	for url in product_urls:
-		count -= 1
-		print(count)
-		
-		soup = soup_maker(request(url))
+		req = request(url)
+		if req is not None:
+			soup = soup_maker(req)
+		else:
+			print(url)
+			continue
+			
 		data = soup.find('script', id="product-data")
-		
 		if data is None:
 			continue
 			
@@ -224,13 +225,15 @@ def product_data():
 		size_run = OrderedDict.fromkeys(size_run.fromkeys(size_run), False)
 
 		time.sleep(5)
+
 			
-# Main
-start = timeit.default_timer()
-
-retrieve_links()
-# product_data()
-print(url_archive, file=archive_file)
-archive_file.close()
-
-print('{} mins'.format((timeit.default_timer()-start)/60))
+def main():
+	start = timeit.default_timer()
+	
+	retrieve_links()
+	product_data()
+	
+	print(url_archive, file=archive_file)
+	archive_file.close()
+	
+	print('{} mins'.format((timeit.default_timer()-start)/60))
