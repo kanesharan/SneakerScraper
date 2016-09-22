@@ -20,7 +20,9 @@ Scrapes product data including product id, price, size run, and release date; al
 
 
 ### Supported Site
-- [x] Nike
-- [ ] Asics
+- [] Nike
+- [x] Asics
 - [ ] Puma
 - [ ] Adidas
+- [ ] New Balance
+- [ ] Saucony
