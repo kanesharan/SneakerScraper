@@ -1,6 +1,7 @@
-from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
+from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup as bs
+import socket
 import gzip
 
 
@@ -15,18 +16,22 @@ def request(url):
 		'Accept-Language': 'en-US,en;q=0.8,da;q=0.6'
 	}
 	
-	req = Request(url, headers=headers)
+	response = None
 	try:
+		req = Request(url, headers=headers)
 		response = urlopen(req, timeout=10)
+	except ValueError as e:
+		print('Value Error: ', e)
 	except HTTPError as e:
-		print(url)
-		print('Error code: ', e.code)
-		return None
+		print('HTTP Error: ', e.code)
 	except URLError as e:
-		print(url)
-		print('Reason: ', e.reason)
-		return None
-	else:
+		if hasattr(e, 'reason'):
+			print('URL Error: ', e.reason)
+		elif hasattr(e, 'code'):
+			print('URL Error: ', e.code)
+	except socket.error as e:
+		print('Socket Error: ', e)
+	finally:
 		return response
 
 
