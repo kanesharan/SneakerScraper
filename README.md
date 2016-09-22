@@ -1,26 +1,33 @@
 # SneakerScraper
 
-Scraper for sneaker sites to build the ultimate database of sneakers for use in future projects.
+Series of scrapers for sneaker sites in effort to build the ultimate database of sneakers for use in future projects.
 
 
 ### Installation
 
 Requires [Python 3](https://www.python.org/downloads/)
 
-BeautifulSoup4, urllib.request, requests:
+BeautifulSoup4, urllib.request:
 
 ```sh
 $ pip install bs4
 $ pip install urllib.request
-$ pip install requests
 ```
 
 ### Features
-Scrapes product data including product id, price, size run, and release date; also downloads product images. 
+Scrapes product data including:
+* name
+* product id
+* price
+* size run
+* release date
+* product images
 
 
-### Supported Site
-- [x] Nike
-- [ ] Asics
+### Supported Sites:
+- [ ] Nike
+- [x] Asics
 - [ ] Puma
 - [ ] Adidas
+- [ ] New Balance
+- [ ] Saucony
