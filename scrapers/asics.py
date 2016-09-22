@@ -2,7 +2,7 @@
 author: Mykal Burris
 created: 18-Sept-2016
 updated: 21-Sept-2016
-version: 1.6
+version: 1.7
 """
 from scraper_lib import*
 from collections import OrderedDict
@@ -35,23 +35,19 @@ def retrieve_links():
 			url = base_url + a['href']
 			if url not in product_urls and url not in url_archive:
 				product_urls.add(url)
-	product_data()
 	
 	
 def product_data():
 	size_run = OrderedDict.fromkeys(['3.5', '4', '4.5', '5', '5.5', '6', '6.5', '7', '7.5'], False)
 	size_run.update(OrderedDict.fromkeys(['8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5'], False))
 	size_run.update(OrderedDict.fromkeys(['12', '12.5', '13', '13.5', '14', '15', '16', '17', '18'], False))
-	
-	count = len(product_urls)
+
 	for url in product_urls:
-		count -= 1
-		print(count)
-		
 		req = request(url)
 		if req is not None:
 			soup = soup_maker(req)
 		else:
+			print(url)
 			continue
 		data = soup.find_all('script', type='text/javascript')[1]
 		for script in data:
@@ -143,13 +139,15 @@ def product_data():
 		
 		url_archive.add(url)
 		time.sleep(5)
-		
-# Main
-start = timeit.default_timer()
 
-retrieve_links()
 
-print(url_archive, file=archive_file)
-archive_file.close()
+def main():
+	start = timeit.default_timer()
+	
+	retrieve_links()
+	product_data()
 
-print('{} mins'.format((timeit.default_timer()-start)/60))
+	print(url_archive, file=archive_file)
+	archive_file.close()
+	
+	print('{} mins'.format((timeit.default_timer()-start)/60))
