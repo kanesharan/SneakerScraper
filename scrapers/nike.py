@@ -97,8 +97,6 @@ def product_data():
 		product_id = json_data['chat']['productId']
 		price = json_data['overriddenLocalPrice']
 		width = json_data['desktopBazaarVoiceConfiguration']['productWidth']
-		tech_specs = json_data['techSpecs']
-		featured_tech = json_data['featuredTechnology']
 		geo = json_data['chat']['geo']
 		
 		if tech_specs is not None or featured_tech is not None:
