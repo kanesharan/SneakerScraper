@@ -7,12 +7,11 @@ Scraper for sneaker sites to build the ultimate database of sneakers for use in 
 
 Requires [Python 3](https://www.python.org/downloads/)
 
-BeautifulSoup4, urllib.request, requests:
+BeautifulSoup4, urllib.request:
 
 ```sh
 $ pip install bs4
 $ pip install urllib.request
-$ pip install requests
 ```
 
 ### Features
